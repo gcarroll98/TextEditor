@@ -8,34 +8,27 @@
 using namespace std;
 
 
+void storescreen(WINDOW* sub, int top, int rows, int cols);
 
 
+WINDOW* main_window = nullptr;
+WINDOW* sub_window = nullptr;
+int num_rows = 0;
+int num_cols = 0;
+int sub_cols;
+int sub_rows;
+
+vector<char> indline(0);
+vector<vector<char>> lines(0);
 
 int main(int argc,char* argv[])
 {
 	
-	WINDOW* main_window = nullptr;
-	WINDOW* sub_window = nullptr;
-	int num_rows = 0;
-	int num_cols = 0;
-	
-	
 	//start a new window for editing text.
+	main_window = initscr();
+
 	
-	main_window= initscr();
 	
-
-	/*
-	In class notes for grabbing text from file
-	
-
-	to pull string from vector use
-	wmvaddstr(my_str.c_str());
-	
-	*/
-
-
-
 	//take up most of the screen
 	getmaxyx(main_window, num_rows, num_cols);
 	int sub_rows = num_rows - 3;
@@ -45,23 +38,13 @@ int main(int argc,char* argv[])
 	sub_window = newwin(sub_rows, sub_cols, 2, 1);
 	
 
-	vector<char> indline(0);
-	vector<vector<char>> lines(0);
-
-	//resize 2d vector to the the same size as the window
-	//lines.resize(num_cols, vector<char>(num_rows));
-	
-	  
-	
-	
-
 	keypad(sub_window, TRUE);
 	//nodelay(sub_window, TRUE);
 	cbreak();
 	curs_set(2);
 	//scrollok(sub_window, TRUE);
 	
-
+	//Set border in main window
 	wborder(main_window, 0, 0, 0, 0, 0, 0, 0, 0);
 	
 	mvwaddstr(main_window,1, 1, "Press ESC to exit");
@@ -83,13 +66,13 @@ int main(int argc,char* argv[])
 	//Open the text file input from the screen
 	ifstream txtfile;
 	txtfile.open(filename);
-	char filechars;
-	
+	char filechars = ' ';
+	char lastfilechar = ' ';
 	wmove(sub_window, 2, 0);
 
 	//while there is contents in the file
 	while (txtfile.good() == TRUE) {
-
+		lastfilechar = filechars;
 		//get individual characters from text file
 		txtfile.get(filechars);
 
@@ -105,6 +88,8 @@ int main(int argc,char* argv[])
 			//clear the chars out of individual line to make room for next line
 			indline.clear();
 		}
+		
+		
 	}
 	
 	//add last line of text to lines
@@ -116,7 +101,7 @@ int main(int argc,char* argv[])
 	int	uppbnd = 0; //upper bound of vector to be displayed on screen. Initialize to 0.
 	int lowbnd = lines.size(); //lower bound of vector to be displayed on screen. Starts at bottom of vector
 
-	//Output contents to screen
+	//OUTPUT CONTENTS OF FILE TO SCREEN
 
 	//First check if file length is larger than screen size
 	if (lines.size() >= sub_rows-1) {
@@ -141,6 +126,7 @@ int main(int argc,char* argv[])
 	}
 	//Otherwise output contents normally 
 	else {
+		wclear(sub_window);
 		//output 2d vector to sub window
 		for (int i = 0; i < lines.size(); i++) {
 			// set parameter to length of char vector i in vector lines
@@ -153,23 +139,41 @@ int main(int argc,char* argv[])
 	wrefresh(sub_window);
 	
 	int remaining = 0; // number of remaining lines below lower bound
-
-	int result = ' ';
+	int result = ' '; //initialize variable for catching keyboard input
+	
 	noecho();
+
+	//GET KEYBOARD INPUT FROM USER FOR EDITING/SCROLLING
+
 	while (result != 27) {
+
+		//get keystroke value from subwindow
 		int result2 = wgetch(sub_window);
 		
+		//find position on screen
 		getyx(sub_window, y, x);
 
-		
-
+	
 		switch (result2) {
+
 		case KEY_DOWN:
-			if (y == sub_rows-1 && remaining > 0) {
+			if (y == sub_rows - 1 && remaining > 0) {
+				//when scrolling, save contents on screen before going to next page of text
+				storescreen(sub_window, uppbnd, sub_rows, sub_cols);
+
+				//clear previous contents of screen
 				wclear(sub_window);
+
+				//set new placeholder for where we are in vector one full screen length down
 				uppbnd = uppbnd + sub_rows;
+
+				//check if lower bound would go out of scope
 				if (lowbnd + sub_rows >= lines.size()) {
+
+					//set lower bound to end of vector length
 					lowbnd = lines.size();
+
+					//start at top of vector placeholder
 					for (int i = uppbnd; i < lowbnd; i++) {
 						// set parameter to length of char vector i in vector lines
 						for (int j = 0; j < lines[i].size(); j++) {
@@ -177,20 +181,27 @@ int main(int argc,char* argv[])
 							waddch(sub_window, lines[i][j]);
 						}
 					}
-				}
 					
-			else {
-				lowbnd = lowbnd + sub_rows;
-				for (int i = uppbnd; i < uppbnd+sub_rows; i++) {
 
-					// set parameter to length of char vector i in vector lines
-					for (int j = 0; j < lines[i].size(); j++) {
-						//add chars to screen
-						waddch(sub_window, lines[i][j]);
+				}
+			
+					
+				else {
+					storescreen(sub_window, uppbnd, sub_rows, sub_cols);
+
+					lowbnd = lowbnd + sub_rows;
+					for (int i = uppbnd; i < uppbnd + sub_rows; i++) {
+
+						// set parameter to length of char vector i in vector lines
+						for (int j = 0; j < lines[i].size(); j++) {
+							//add chars to screen
+							waddch(sub_window, lines[i][j]);
 						}
 					}
+
 				}
 				
+
 				remaining = lines.size() - lowbnd;
 				wmove(sub_window, 0, 0);
 			}
@@ -198,8 +209,12 @@ int main(int argc,char* argv[])
 				wmove(sub_window, y + 1, x);
 			
 			break;
+
 		case KEY_UP:
 			if (y == 0 && uppbnd >= sub_rows) {
+				
+				storescreen(sub_window,uppbnd, sub_rows,sub_cols);
+
 				//Clear current text on screen
 				wclear(sub_window);
 			
@@ -217,6 +232,9 @@ int main(int argc,char* argv[])
 				}
 			}
 			else if (y == 0) {
+				
+				storescreen(sub_window, uppbnd, sub_rows,sub_cols);
+
 				wclear(sub_window);
 				
 
@@ -228,6 +246,7 @@ int main(int argc,char* argv[])
 						waddch(sub_window, lines[i][j]);
 					}
 				}
+
 			}
 			else
 			{
@@ -281,20 +300,62 @@ int main(int argc,char* argv[])
 		
 
 		}
-		
+		//text wrapping
 		if (x == sub_cols && result2 != 8)
 			wmove(sub_window,y+1, 0);
 		
-		
-		
-		
-		
-		
+		//set keyboard stroke equal to result to check for ESC
 			result = result2;
 	}
+
+	//close window
+	endwin();
+	/*
+	//Output vector contents back to file
+	ofstream outfile;
+	outfile.open(filename);
+
+	for (int i = 0; i < lines.size(); i++) {
+		for (int j = 0; j < lines[i].size(); j++) {
+			outfile << lines[i][j];
+		}
+	}
+
+	outfile.close();
+	*/
 	lines.clear();
 	indline.clear();
-	endwin();
+}
+	
+
+//Function to store the current screen contents back in the vector
+void storescreen(WINDOW* sub, int top, int rows, int cols) {
+	int y = 0;
+	int bottom = top + rows;
+	wmove(sub, 0, 0);
+	indline.clear();
+	for (int i = top; i < bottom && i < lines.size(); i++) {
+		for (int j = 0; j < cols; j++) {
+			
+			if (j == cols - 1) {
+				indline.push_back(char(mvwinch(sub,y,j)));
+				indline.push_back('\n');
+
+			}
+			else {
+				char ch = char(mvwinch(sub, y, j));
+				indline.push_back(ch);
+			}
+				
+			
+			
+		}
+		y++;
+		
+		lines[i] = indline;
+		indline.clear();
+
+	}
 	
 
 }
