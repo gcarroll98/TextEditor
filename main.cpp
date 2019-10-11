@@ -333,19 +333,26 @@ int main(int argc,char* argv[])
 
 	//close window
 	endwin();
-	/*
+	
 	//Output vector contents back to file
 	ofstream outfile;
 	outfile.open(filename);
 
 	for (int i = 0; i < lines.size(); i++) {
 		for (int j = 0; j < lines[i].size(); j++) {
-			outfile << lines[i][j];
+			if (j==117) {
+				outfile << endl;
+				break;
+			}
+			else {
+				outfile << lines[i][j];
+			}
 		}
+		
 	}
 
 	outfile.close();
-	*/
+	
 	lines.clear();
 	indline.clear();
 }
