@@ -9,7 +9,7 @@ using namespace std;
 
 
 void storescreen(WINDOW* sub, int top, int rows, int cols);
-
+void wordwrap(int m, int n, vector<char>& wrd);
 
 WINDOW* main_window = nullptr;
 WINDOW* sub_window = nullptr;
@@ -295,6 +295,20 @@ int main(int argc,char* argv[])
 			break;
 		default:
 
+			/*
+			// Code for wrapping full words (to replace text wrapping
+			if (x == sub_cols && result !=32)
+				vector<char>word;
+				wordwrap(y,x,word); //void function wordwrap (current y, current x, vector of char to return)
+				
+				wmove(sub_window,y+1,0);
+
+				for (int i =0; i<word.size();i++) 
+					waddch(sub_window,word[i]);			
+			
+			*/
+
+
 			//text wrapping with indicator '-' if word goes to next line
 			
 			if (x == sub_cols - 1 && result2 != 8 && result2 != 32 && result != 32) {
@@ -360,5 +374,10 @@ void storescreen(WINDOW* sub, int top, int rows, int cols) {
 
 	}
 	
+
+}
+
+void wordwrap(int m, int n, vector<char>& wrd) {
+
 
 }
