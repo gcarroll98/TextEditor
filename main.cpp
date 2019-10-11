@@ -294,15 +294,24 @@ int main(int argc,char* argv[])
 			}
 			break;
 		default:
+
+			//text wrapping with indicator '-' if word goes to next line
+			
+			if (x == sub_cols - 1 && result2 != 8 && result2 != 32 && result != 32) {
+				waddch(sub_window, '-');
+				wmove(sub_window, y + 1, 0);
+			}
+			else if (x == sub_cols - 1 && result2 != 8) {
+				wmove(sub_window, y + 1, 0);
+			}
+			
 			waddch(sub_window,result2);
 			
 			break;
 		
 
 		}
-		//text wrapping
-		if (x == sub_cols && result2 != 8)
-			wmove(sub_window,y+1, 0);
+		
 		
 		//set keyboard stroke equal to result to check for ESC
 			result = result2;
