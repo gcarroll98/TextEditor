@@ -246,7 +246,7 @@ int main(int argc,char* argv[])
 						waddch(sub_window, lines[i][j]);
 					}
 				}
-
+			
 			}
 			else
 			{
@@ -337,15 +337,9 @@ void storescreen(WINDOW* sub, int top, int rows, int cols) {
 	for (int i = top; i < bottom && i < lines.size(); i++) {
 		for (int j = 0; j < cols; j++) {
 			
-			if (j == cols - 1) {
-				indline.push_back(char(mvwinch(sub,y,j)));
-				indline.push_back('\n');
-
-			}
-			else {
+			
 				char ch = char(mvwinch(sub, y, j));
 				indline.push_back(ch);
-			}
 				
 			
 			
